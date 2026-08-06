@@ -1,7 +1,7 @@
 sonar.projectKey=react-demo-todo
 sonar.projectName=React Demo-todo
 sonar.host.url=http://localhost:9000
-sonar.token=squ_a9cca59231af205d3cafa73ebd9f7b7111cfc2a2
+sonar.token=TU_PROJECT_TOKEN
 sonar.sources=src
 sonar.tests=src
 sonar.test.inclusions=**/*.test.js,**/*.test.jsx
