@@ -1,6 +1,6 @@
 {
-    "sonarlint.connectedMode.project": {
-        "connectionId": "cursor-token",
-        "projectKey": "react-demo-todo"
-    }
+  "sonarlint.connectedMode.project": {
+    "connectionId": "cursor-token",
+    "projectKey": "react-demo-todo"
+  }
 }

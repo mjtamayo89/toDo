@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manual SonarQube — React ToDo</title>
+  <style>
+    @page { margin: 2cm; }
+  body {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    line-height: 1.55;
+    color: #1a1a1a;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+    font-size: 11pt;
+  }
+  h1 {
+    color: #0e4a7c;
+    border-bottom: 3px solid #0e4a7c;
+    padding-bottom: 0.4rem;
+    font-size: 1.8rem;
+  }
+  h2 {
+    color: #0e4a7c;
+    margin-top: 1.8rem;
+    font-size: 1.25rem;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 0.2rem;
+  }
+  h3 { color: #333; margin-top: 1.2rem; font-size: 1rem; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+    font-size: 10pt;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 0.45rem 0.6rem;
+    text-align: left;
+  }
+  th { background: #e8f0f8; }
+  code, pre {
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 9.5pt;
+  }
+  pre {
+    background: #f4f4f4;
+    border: 1px solid #ddd;
+    padding: 0.8rem;
+    overflow-x: auto;
+    border-radius: 4px;
+  }
+  .meta {
+    background: #f0f4f8;
+    padding: 1rem;
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+    font-size: 10pt;
+  }
+  .note {
+    background: #fff8e6;
+    border-left: 4px solid #e6a800;
+    padding: 0.7rem 1rem;
+    margin: 1rem 0;
+    font-size: 10pt;
+  }
+  .flow {
+    background: #f4f4f4;
+    padding: 1rem;
+    font-family: Consolas, monospace;
+    font-size: 9pt;
+    line-height: 1.4;
+    border-radius: 4px;
+  }
+  ul { margin: 0.4rem 0; }
+  li { margin: 0.25rem 0; }
+  .footer {
+    margin-top: 2rem;
+    font-size: 9pt;
+    color: #666;
+    text-align: center;
+    border-top: 1px solid #ccc;
+    padding-top: 1rem;
+  }
+  @media print {
+    body { padding: 0; }
+    h2 { break-before: auto; }
+    pre { break-inside: avoid; }
+  }
+  </style>
+</head>
+<body>
+
+<h1>Manual: Instalación y configuración de SonarQube</h1>
+
+<div class="meta">
+  <strong>Proyecto:</strong> React ToDo &nbsp;|&nbsp;
+  <strong>Project Key:</strong> <code>react-demo-todo</code> &nbsp;|&nbsp;
+  <strong>Fecha:</strong> Agosto 2026
+</div>
+
+<h2>1. Requisitos previos</h2>
+<table>
+  <tr><th>Herramienta</th><th>Versión</th><th>Verificar</th></tr>
+  <tr><td>Node.js</td><td>18+</td><td><code>node -v</code></td></tr>
+  <tr><td>npm</td><td>9+</td><td><code>npm -v</code></td></tr>
+  <tr><td>Git</td><td>cualquiera</td><td><code>git --version</code></td></tr>
+  <tr><td>Docker Desktop (recomendado)</td><td>reciente</td><td><code>docker --version</code></td></tr>
+</table>
+<div class="note"><strong>Windows:</strong> Si PowerShell bloquea <code>npm</code>, usa <code>npm.cmd</code> o Git Bash.</div>
+
+<h2>2. Instalar SonarQube Server</h2>
+
+<h3>2.1 Con Docker (recomendado)</h3>
+<ol>
+  <li>Abre <strong>Docker Desktop</strong> y espera a que esté en ejecución.</li>
+  <li>Ejecuta en terminal:</li>
+</ol>
+<pre>docker run -d --name sonarqube -p 9000:9000 sonarqube:latest</pre>
+<ol start="3">
+  <li>Espera 1–2 minutos.</li>
+  <li>Abre <strong>http://localhost:9000</strong></li>
+</ol>
+
+<h3>2.2 Sin Docker</h3>
+<ol>
+  <li>Descarga SonarQube Community: <code>sonarsource.com/products/sonarqube/downloads</code></li>
+  <li>Extrae el ZIP (ej. <code>C:\sonarqube</code>).</li>
+  <li>Ejecuta <code>bin\windows-x86-64\StartSonar.bat</code>.</li>
+  <li>Abre <strong>http://localhost:9000</strong></li>
+</ol>
+
+<h3>2.3 Detener / reiniciar (Docker)</h3>
+<pre>docker stop sonarqube
+docker start sonarqube</pre>
+
+<h2>3. Primer acceso</h2>
+<ol>
+  <li>Ve a <strong>http://localhost:9000</strong></li>
+  <li>Usuario: <code>admin</code> — Contraseña: <code>admin</code></li>
+  <li>Cambia la contraseña cuando te lo pida.</li>
+</ol>
+
+<h2>4. Crear el proyecto en SonarQube</h2>
+<ol>
+  <li><strong>Create</strong> → <strong>Manually</strong></li>
+  <li>Project key: <code>react-demo-todo</code></li>
+  <li>Display name: <code>React Demo-todo</code></li>
+  <li><strong>Set Up</strong> → <strong>Locally</strong></li>
+  <li>Genera un token (nombre ej. <code>cursor-local</code>)</li>
+  <li>Copia el token (<code>squ_...</code>). No se vuelve a mostrar completo.</li>
+</ol>
+
+<h2>5. Configurar el proyecto React</h2>
+
+<h3>5.1 Instalar dependencias</h3>
+<pre>cd C:\Users\cotit\OneDrive\Desktop\toDo
+npm install</pre>
+
+<h3>5.2 Crear sonar-project.properties</h3>
+<pre>copy sonar-project.properties.example sonar-project.properties</pre>
+<p>Edita y pon tu token:</p>
+<pre>sonar.projectKey=react-demo-todo
+sonar.projectName=React Demo-todo
+sonar.host.url=http://localhost:9000
+sonar.token=TU_TOKEN_AQUI
+sonar.sources=src
+sonar.tests=src
+sonar.test.inclusions=**/*.test.js,**/*.test.jsx
+sonar.exclusions=**/node_modules/**,**/coverage/**,**/*.test.js,**/*.test.jsx,**/test/**
+sonar.javascript.lcov.reportPaths=coverage/lcov.info</pre>
+<div class="note"><code>sonar-project.properties</code> está en <code>.gitignore</code>. No subas el token a Git.</div>
+
+<h2>6. SonarLint en Cursor</h2>
+<ol>
+  <li><code>Ctrl + Shift + X</code> → instala <strong>SonarQube for IDE</strong> (SonarLint).</li>
+  <li><code>Ctrl + Shift + P</code> → conectar a SonarQube.</li>
+  <li>URL: <code>http://localhost:9000</code> + tu token.</li>
+  <li>Project key: <code>react-demo-todo</code></li>
+</ol>
+<p>En <code>.vscode/settings.json</code>:</p>
+<pre>{
+  "sonarlint.connectedMode.project": {
+    "connectionId": "cursor-token",
+    "projectKey": "react-demo-todo"
+  }
+}</pre>
+
+<h2>7. Ejecutar análisis completo</h2>
+<p><strong>Paso 1</strong> — Cobertura:</p>
+<pre>npm run test:coverage</pre>
+<p><strong>Paso 2</strong> — Sonar:</p>
+<pre>npm run sonar</pre>
+<p><strong>Paso 3</strong> — Ver resultados:</p>
+<pre>http://localhost:9000/dashboard?id=react-demo-todo</pre>
+
+<h2>8. Cobertura en HTML</h2>
+<ol>
+  <li><code>npm run test:coverage</code></li>
+  <li>Abre <code>coverage/index.html</code> en el navegador.</li>
+</ol>
+
+<h2>9. Flujo de trabajo</h2>
+<div class="flow">
+Codificar (SonarLint en IDE)
+        ↓
+npm run test:coverage
+        ↓
+npm run sonar
+        ↓
+Dashboard localhost:9000
+</div>
+
+<h2>10. Jenkins (opcional)</h2>
+<p>El <code>Jenkinsfile</code> ejecuta tests, build y sonar-scanner.</p>
+<p>Credenciales en Jenkins:</p>
+<table>
+  <tr><th>ID</th><th>Valor</th></tr>
+  <tr><td><code>sonar-token</code></td><td>Token <code>squ_...</code></td></tr>
+  <tr><td><code>sonar-host-url</code></td><td><code>http://localhost:9000</code></td></tr>
+</table>
+
+<h2>11. Solución de problemas</h2>
+<table>
+  <tr><th>Problema</th><th>Solución</th></tr>
+  <tr><td>npm bloqueado en PowerShell</td><td>Usa <code>npm.cmd</code> o Git Bash</td></tr>
+  <tr><td>Error de autenticación</td><td>Verifica token y que SonarQube esté en <code>localhost:9000</code></td></tr>
+  <tr><td>SonarQube no arranca</td><td><code>docker logs sonarqube</code></td></tr>
+  <tr><td>SonarLint sin issues</td><td>Revisa conexión, project key, Reload Window</td></tr>
+  <tr><td>Cobertura 0% en Sonar</td><td>Ejecuta <code>test:coverage</code> antes de <code>sonar</code></td></tr>
+</table>
+
+<h2>12. Archivos del proyecto</h2>
+<table>
+  <tr><th>Archivo</th><th>Descripción</th></tr>
+  <tr><td><code>sonar-project.properties.example</code></td><td>Plantilla</td></tr>
+  <tr><td><code>sonar-project.properties</code></td><td>Config local con token</td></tr>
+  <tr><td><code>package.json</code></td><td>Scripts test:coverage y sonar</td></tr>
+  <tr><td><code>coverage/lcov.info</code></td><td>Reporte para Sonar</td></tr>
+  <tr><td><code>coverage/index.html</code></td><td>Reporte visual</td></tr>
+  <tr><td><code>Jenkinsfile</code></td><td>Pipeline CI</td></tr>
+</table>
+
+<h2>13. Comandos rápidos</h2>
+<pre>npm run dev              # Desarrollo
+npm test                 # Tests
+npm run test:coverage    # Cobertura
+npm run sonar            # Análisis Sonar
+
+docker run -d --name sonarqube -p 9000:9000 sonarqube:latest
+docker start sonarqube
+docker stop sonarqube</pre>
+
+<div class="footer">
+  Manual SonarQube — Proyecto ToDo (React + Vite + Vitest)
+</div>
+
+</body>
+</html>

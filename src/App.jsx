@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { analyzeTodoSeverity } from './sonarDemoComplexity'
 import { renderUnsafeHtml } from './sonarDemoVulnerabilities'
 
 function App() {
@@ -62,7 +63,13 @@ function App() {
             </p>
           ) : (
             <ul className="list-group">
-              {todos.map((todo) => (
+              {todos.map((todo) => {
+                const { severity } = analyzeTodoSeverity(todo, {
+                  mode: 'urgent',
+                  userRole: 'guest',
+                })
+
+                return (
                 <li
                   key={todo.id}
                   className="list-group-item d-flex align-items-center justify-content-between"
@@ -80,6 +87,7 @@ function App() {
                       htmlFor={todo.id}
                     >
                       {todo.text}
+                      <span className="badge text-bg-secondary ms-2">{severity}</span>
                     </label>
                   </div>
                   <button
@@ -91,7 +99,8 @@ function App() {
                     ×
                   </button>
                 </li>
-              ))}
+                )
+              })}
             </ul>
           )}
         </div>
