@@ -234,22 +234,16 @@ Verás porcentajes por archivo y líneas cubiertas / no cubiertas.
 
 ## 10. Jenkins (opcional)
 
-El proyecto incluye un `Jenkinsfile` con pipeline:
+El proyecto incluye un `Jenkinsfile` con pipeline CI que ejecuta tests, build y análisis Sonar automáticamente.
 
-1. Checkout
-2. `npm ci`
-3. `npm run test:coverage`
-4. `npm run build`
-5. `npx sonar-scanner`
+Consulta el manual completo: **`docs/manual-jenkins.md`**
 
-En Jenkins, crea credenciales:
+Credenciales necesarias en Jenkins:
 
 | ID | Tipo | Valor |
 |----|------|-------|
 | `sonar-token` | Secret text | Token `squ_...` |
-| `sonar-host-url` | Secret text | `http://localhost:9000` |
-
-Jenkins genera `sonar-project.properties` en el pipeline y lo borra al terminar.
+| `sonar-host-url` | Secret text | `http://host.docker.internal:9000` (Jenkins en Docker) |
 
 ---
 

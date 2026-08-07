@@ -60,36 +60,32 @@ pipeline {
           string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN'),
           string(credentialsId: 'sonar-host-url', variable: 'SONAR_HOST_URL'),
         ]) {
-          writeFile file: 'sonar-project.properties', text: """sonar.projectKey=${SONAR_PROJECT_KEY}
-sonar.projectName=${SONAR_PROJECT_NAME}
-sonar.host.url=${SONAR_HOST_URL}
-sonar.token=${SONAR_TOKEN}
-sonar.sources=src
-sonar.tests=src
-sonar.test.inclusions=**/*.test.js,**/*.test.jsx
-sonar.exclusions=**/node_modules/**,**/coverage/**,**/*.test.js,**/*.test.jsx,**/test/**
-sonar.javascript.lcov.reportPaths=coverage/lcov.info
-"""
           script {
             if (isUnix()) {
-              sh 'npx sonar-scanner'
+              sh '''npx sonar-scanner \
+                -Dsonar.projectKey="$SONAR_PROJECT_KEY" \
+                -Dsonar.projectName="$SONAR_PROJECT_NAME" \
+                -Dsonar.host.url="$SONAR_HOST_URL" \
+                -Dsonar.token="$SONAR_TOKEN" \
+                -Dsonar.sources=src \
+                -Dsonar.tests=src \
+                -Dsonar.test.inclusions=**/*.test.js,**/*.test.jsx \
+                -Dsonar.exclusions=**/node_modules/**,**/coverage/**,**/*.test.js,**/*.test.jsx,**/test/** \
+                -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+              '''
             } else {
-              bat 'npx sonar-scanner'
+              bat '''npx sonar-scanner ^
+                -Dsonar.projectKey=%SONAR_PROJECT_KEY% ^
+                -Dsonar.projectName=%SONAR_PROJECT_NAME% ^
+                -Dsonar.host.url=%SONAR_HOST_URL% ^
+                -Dsonar.token=%SONAR_TOKEN% ^
+                -Dsonar.sources=src ^
+                -Dsonar.tests=src ^
+                -Dsonar.test.inclusions=**/*.test.js,**/*.test.jsx ^
+                -Dsonar.exclusions=**/node_modules/**,**/coverage/**,**/*.test.js,**/*.test.jsx,**/test/** ^
+                -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+              '''
             }
-          }
-        }
-      }
-    }
-  }
-
-  post {
-    always {
-      script {
-        if (fileExists('sonar-project.properties')) {
-          if (isUnix()) {
-            sh 'rm -f sonar-project.properties'
-          } else {
-            bat 'del /f /q sonar-project.properties'
           }
         }
       }

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manual Jenkins — React ToDo</title>
+  <style>
+    @page { margin: 2cm; }
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      line-height: 1.55;
+      color: #1a1a1a;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+      font-size: 11pt;
+    }
+    h1 {
+      color: #6b2d5c;
+      border-bottom: 3px solid #6b2d5c;
+      padding-bottom: 0.4rem;
+      font-size: 1.8rem;
+    }
+    h2 {
+      color: #6b2d5c;
+      margin-top: 1.8rem;
+      font-size: 1.25rem;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 0.2rem;
+    }
+    h3 { color: #333; margin-top: 1.2rem; font-size: 1rem; }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 1rem 0;
+      font-size: 10pt;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 0.45rem 0.6rem;
+      text-align: left;
+    }
+    th { background: #f5e8f2; }
+    code, pre {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 9.5pt;
+    }
+    pre {
+      background: #f4f4f4;
+      border: 1px solid #ddd;
+      padding: 0.8rem;
+      overflow-x: auto;
+      border-radius: 4px;
+    }
+    .meta {
+      background: #f8f0f5;
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 1.5rem;
+      font-size: 10pt;
+    }
+    .note {
+      background: #fff8e6;
+      border-left: 4px solid #e6a800;
+      padding: 0.7rem 1rem;
+      margin: 1rem 0;
+      font-size: 10pt;
+    }
+    .flow {
+      background: #f4f4f4;
+      padding: 1rem;
+      font-family: Consolas, monospace;
+      font-size: 9pt;
+      line-height: 1.4;
+      border-radius: 4px;
+      white-space: pre;
+    }
+    ul { margin: 0.4rem 0; }
+    li { margin: 0.25rem 0; }
+    .footer {
+      margin-top: 2rem;
+      font-size: 9pt;
+      color: #666;
+      border-top: 1px solid #ddd;
+      padding-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Manual: Instalación y configuración de Jenkins</h1>
+
+<div class="meta">
+  <strong>Proyecto:</strong> React ToDo<br />
+  <strong>Repositorio:</strong> <a href="https://github.com/mjtamayo89/toDo">github.com/mjtamayo89/toDo</a><br />
+  <strong>Fecha:</strong> Agosto 2026
+</div>
+
+<h2>1. Requisitos previos</h2>
+<table>
+  <tr><th>Herramienta</th><th>Para qué</th></tr>
+  <tr><td>Docker Desktop</td><td>Ejecutar Jenkins en contenedor</td></tr>
+  <tr><td>Git</td><td>Clonar el repositorio</td></tr>
+  <tr><td>SonarQube</td><td>Análisis de calidad (último paso del pipeline)</td></tr>
+  <tr><td>Cuenta GitHub</td><td>Repositorio del código</td></tr>
+</table>
+
+<h2>2. Instalar Jenkins con Docker</h2>
+<pre>docker run -d -p 8080:8080 -p 50000:50000 --name jenkins jenkins/jenkins:lts</pre>
+<p>Interfaz web: <strong>http://localhost:8080</strong></p>
+<pre>docker stop jenkins
+docker start jenkins</pre>
+
+<h2>3. Primer acceso</h2>
+<ol>
+  <li>Abre http://localhost:8080</li>
+  <li>Contraseña inicial: <code>docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword</code></li>
+  <li><strong>Install suggested plugins</strong></li>
+  <li>Crea usuario administrador</li>
+</ol>
+<div class="note">La contraseña del archivo inicial solo se usa una vez. Después entras con el usuario del wizard.</div>
+
+<h2>4. Instalar Node.js en el contenedor</h2>
+<pre>docker exec -u root jenkins bash -c "apt-get update -qq &amp;&amp; apt-get install -y -qq curl ca-certificates gnupg &amp;&amp; curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &amp;&amp; apt-get install -y -qq nodejs"</pre>
+
+<h2>5. Credenciales de SonarQube</h2>
+<p><strong>Manage Jenkins</strong> → <strong>Credentials</strong> → <strong>Global</strong> → <strong>Add</strong></p>
+<table>
+  <tr><th>ID</th><th>Tipo</th><th>Valor</th></tr>
+  <tr><td><code>sonar-token</code></td><td>Secret text</td><td>Token <code>squ_...</code></td></tr>
+  <tr><td><code>sonar-host-url</code></td><td>Secret text</td><td><code>http://host.docker.internal:9000</code></td></tr>
+</table>
+<div class="note"><code>host.docker.internal</code> permite que Jenkins (en Docker) llegue a SonarQube en tu PC Windows.</div>
+
+<h2>6. Crear el pipeline</h2>
+<ol>
+  <li><strong>New Item</strong> → <code>toDo</code> → <strong>Pipeline</strong></li>
+  <li><strong>Pipeline script from SCM</strong> → Git</li>
+  <li>URL: <code>https://github.com/mjtamayo89/toDo.git</code></li>
+  <li>Branch: <code>*/main</code></li>
+  <li>Script Path: <code>Jenkinsfile</code></li>
+</ol>
+
+<h2>7. Etapas del Jenkinsfile</h2>
+<table>
+  <tr><th>Stage</th><th>Comando</th></tr>
+  <tr><td>Checkout</td><td>Descarga código desde GitHub</td></tr>
+  <tr><td>Install</td><td><code>npm ci</code></td></tr>
+  <tr><td>Test + Coverage</td><td><code>npm run test:coverage</code></td></tr>
+  <tr><td>Build</td><td><code>npm run build</code></td></tr>
+  <tr><td>SonarQube</td><td><code>npx sonar-scanner</code></td></tr>
+</table>
+
+<h2>8. Ejecutar el pipeline</h2>
+<ol>
+  <li>SonarQube corriendo en http://localhost:9000</li>
+  <li>Job <code>toDo</code> → <strong>Build Now</strong></li>
+  <li>Revisar <strong>Console Output</strong></li>
+</ol>
+
+<h2>9. Flujo habitual</h2>
+<div class="flow">Codificar → git commit → git push → Jenkins Build Now
+  → Checkout → Install → Tests → Build → SonarQube
+  → Ver resultados en SonarQube</div>
+<div class="note">Jenkins solo usa el código de GitHub. Siempre haz <code>git push</code> antes de Build Now.</div>
+
+<h2>10. Solución de problemas</h2>
+<ul>
+  <li><strong>npm not found:</strong> instala Node en el contenedor (paso 4)</li>
+  <li><strong>Git auth failed:</strong> repo privado sin token → hazlo público o añade credencial GitHub</li>
+  <li><strong>Sonar connection refused:</strong> usa <code>host.docker.internal:9000</code></li>
+  <li><strong>Sonar se cierra:</strong> proceso Java colgado → cierra instancias anteriores</li>
+</ul>
+
+<h2>11. Comandos rápidos</h2>
+<pre>docker run -d -p 8080:8080 -p 50000:50000 --name jenkins jenkins/jenkins:lts
+docker start jenkins
+docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+git push
+# Build Now en Jenkins</pre>
+
+<div class="footer">
+  Manual generado para el proyecto ToDo — React + Vite + Jenkins + SonarQube<br />
+  Ver también: <code>docs/manual-sonarqube.md</code>
+</div>
+
+</body>
+</html>
