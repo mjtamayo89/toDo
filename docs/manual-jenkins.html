@@ -142,25 +142,53 @@ docker start jenkins</pre>
 </ol>
 
 <h2>7. Etapas del Jenkinsfile</h2>
+<div class="note"><strong>Actualizado:</strong> el <code>Jenkinsfile</code> actual es una versión mínima, solo para probar que Jenkins clona el repo. No corre tests, build ni Sonar todavía.</div>
 <table>
-  <tr><th>Stage</th><th>Comando</th></tr>
+  <tr><th>Stage</th><th>Qué hace</th></tr>
   <tr><td>Checkout</td><td>Descarga código desde GitHub</td></tr>
-  <tr><td>Install</td><td><code>npm ci</code></td></tr>
-  <tr><td>Test + Coverage</td><td><code>npm run test:coverage</code></td></tr>
-  <tr><td>Build</td><td><code>npm run build</code></td></tr>
-  <tr><td>SonarQube</td><td><code>npx sonar-scanner</code></td></tr>
+  <tr><td>Mostrar archivos</td><td><code>ls -la</code> — lista el workspace</td></tr>
 </table>
+<pre>pipeline {
+    agent any
+    stages {
+        stage('Checkout') {
+            steps { git 'https://github.com/mjtamayo89/toDo.git' }
+        }
+        stage('Mostrar archivos') {
+            steps { sh 'ls -la' }
+        }
+    }
+}</pre>
+
+<h3>7.1 La versión completa sigue disponible</h3>
+<p>El pipeline completo (backend + frontend + SonarQube) quedó guardado como <code>Jenkinsfile_v1</code> en la raíz del repo:</p>
+<table>
+  <tr><th>Stage (en Jenkinsfile_v1)</th><th>Carpeta</th><th>Comando</th></tr>
+  <tr><td>Checkout</td><td>raíz</td><td>Descarga código desde GitHub</td></tr>
+  <tr><td>Backend: Test</td><td><code>backend/</code></td><td><code>mvn -B test</code></td></tr>
+  <tr><td>Backend: Build</td><td><code>backend/</code></td><td><code>mvn -B package -DskipTests</code></td></tr>
+  <tr><td>Install</td><td><code>frontend/</code></td><td><code>npm ci</code></td></tr>
+  <tr><td>Test + Coverage</td><td><code>frontend/</code></td><td><code>npm run test:coverage</code></td></tr>
+  <tr><td>Build</td><td><code>frontend/</code></td><td><code>npm run build</code></td></tr>
+  <tr><td>SonarQube</td><td><code>frontend/</code></td><td><code>npx sonar-scanner</code></td></tr>
+</table>
+<p>Para reactivarla: copia el contenido de <code>Jenkinsfile_v1</code> dentro de <code>Jenkinsfile</code>, o cambia el <strong>Script Path</strong> del job a <code>Jenkinsfile_v1</code> en <strong>Configure → Pipeline</strong>.</p>
 
 <h2>8. Ejecutar el pipeline</h2>
 <ol>
-  <li>SonarQube corriendo en http://localhost:9000</li>
   <li>Job <code>toDo</code> → <strong>Build Now</strong></li>
   <li>Revisar <strong>Console Output</strong></li>
 </ol>
+<div class="note">Con la versión mínima, un build verde solo confirma el checkout. Si activaste <code>Jenkinsfile_v1</code>, SonarQube debe estar corriendo en <code>http://localhost:9000</code> antes de construir.</div>
 
 <h2>9. Flujo habitual</h2>
+<p><strong>Con el Jenkinsfile mínimo:</strong></p>
 <div class="flow">Codificar → git commit → git push → Jenkins Build Now
-  → Checkout → Install → Tests → Build → SonarQube
+  → Checkout → ls -la</div>
+<p><strong>Con Jenkinsfile_v1 (pipeline completo):</strong></p>
+<div class="flow">Codificar → git commit → git push → Jenkins Build Now
+  → Checkout → Backend: Test → Backend: Build
+  → Install (front) → Test + Coverage → Build (front) → SonarQube
   → Ver resultados en SonarQube</div>
 <div class="note">Jenkins solo usa el código de GitHub. Siempre haz <code>git push</code> antes de Build Now.</div>
 

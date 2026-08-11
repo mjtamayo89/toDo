@@ -152,9 +152,41 @@ Si SonarQube también estuviera en Docker en la misma red, usarías el nombre de
 
 ## 7. El Jenkinsfile — etapas del pipeline
 
-Jenkins lee el archivo `Jenkinsfile` del repositorio. Cada paso se define en un bloque `stage`:
+> **Actualizado:** el `Jenkinsfile` actual en la raíz del repo es una versión **mínima**, pensada para probar rápido que Jenkins puede clonar el repo y ejecutar pasos. Todavía no corre tests, build ni Sonar automáticamente.
 
-| Stage | Carpeta | Qué hace |
+| Stage | Qué hace |
+|-------|----------|
+| **Checkout** | Descarga el código desde GitHub (`git 'https://github.com/mjtamayo89/toDo.git'`) |
+| **Mostrar archivos** | `ls -la` — solo lista los archivos del workspace, para confirmar que el checkout funcionó |
+
+```groovy
+pipeline {
+
+    agent any
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/mjtamayo89/toDo.git'
+            }
+        }
+
+        stage('Mostrar archivos') {
+            steps {
+                sh 'ls -la'
+            }
+        }
+
+    }
+}
+```
+
+### 7.1 La versión completa (backend + frontend + Sonar) sigue disponible
+
+El pipeline completo que sí ejecuta tests, build y SonarQube para backend y frontend **no se perdió**: quedó guardado como `Jenkinsfile_v1` en la raíz del repo, listo para reactivar cuando quieras.
+
+| Stage (en `Jenkinsfile_v1`) | Carpeta | Qué hace |
 |-------|---------|----------|
 | **Checkout** | raíz | Descarga el código desde GitHub |
 | **Backend: Test** | `backend/` | `mvn -B test` — tests de Spring Boot |
@@ -164,38 +196,27 @@ Jenkins lee el archivo `Jenkinsfile` del repositorio. Cada paso se define en un 
 | **Build** | `frontend/` | `npm run build` — compila React |
 | **SonarQube** | `frontend/` | `npx sonar-scanner` — envía análisis a Sonar |
 
-> El pipeline es **un solo `Jenkinsfile` en la raíz** del repo que usa `dir('backend')` y `dir('frontend')` para ejecutar cada bloque de comandos en la carpeta correcta. No existe un `Jenkinsfile` separado dentro de `backend/`.
+**Para volver a usarla**, tienes dos opciones:
 
-### Estructura simplificada
+1. **Reemplazar el contenido:** copia el contenido de `Jenkinsfile_v1` dentro de `Jenkinsfile` y haz commit.
+2. **Apuntar Jenkins a ese archivo:** en la configuración del job (`Configure` → `Pipeline`), cambia **Script Path** de `Jenkinsfile` a `Jenkinsfile_v1`.
 
-```groovy
-pipeline {
-  agent any
-  stages {
-    stage('Checkout') { ... }
-    stage('Backend: Test') { dir('backend') { ... } }
-    stage('Backend: Build') { dir('backend') { ... } }
-    stage('Install') { dir('frontend') { ... } }
-    stage('Test + Coverage') { dir('frontend') { ... } }
-    stage('Build') { dir('frontend') { ... } }
-    stage('SonarQube') { dir('frontend') { ... } }
-  }
-}
-```
+> Con la versión completa activa, sí necesitas las credenciales `sonar-token` y `sonar-host-url` del paso 5, y la herramienta Maven del paso 4b. Con la versión mínima actual, ninguna de las dos es obligatoria.
 
 ---
 
 ## 8. Ejecutar el pipeline
 
-1. Asegúrate de que **SonarQube** está corriendo (`http://localhost:9000`)
-2. En el job `toDo`, clic en **Build Now**
-3. Revisa el progreso en **Console Output**
+1. En el job `toDo`, clic en **Build Now**
+2. Revisa el progreso en **Console Output**
 
-Si todo va bien, el build queda **verde** y SonarQube muestra un análisis nuevo.
+Con el `Jenkinsfile` mínimo actual, un build verde solo confirma que Jenkins pudo clonar el repo y listar archivos. Si activaste `Jenkinsfile_v1` (sección 7.1), además necesitas que **SonarQube** esté corriendo en `http://localhost:9000` antes de darle a Build Now.
 
 ---
 
 ## 9. Flujo de trabajo habitual
+
+**Con el Jenkinsfile mínimo actual:**
 
 ```
 ┌──────────────────┐
@@ -214,10 +235,37 @@ Si todo va bien, el build queda **verde** y SonarQube muestra un análisis nuevo
 └────────┬─────────┘
          ▼
 ┌──────────────────┐
-│ Checkout → Install│
-│ → Tests → Build  │
-│ → SonarQube      │
+│ Checkout → ls -la│
+└──────────────────┘
+```
+
+**Con `Jenkinsfile_v1` (pipeline completo):**
+
+```
+┌──────────────────┐
+│ Codificar        │
+│ (cambios locales)│
 └────────┬─────────┘
+         ▼
+┌──────────────────┐
+│ git add / commit │
+│ git push         │
+└────────┬─────────┘
+         ▼
+┌──────────────────┐
+│ Jenkins          │
+│ Build Now        │
+└────────┬─────────┘
+         ▼
+┌────────────────────┐
+│ Checkout           │
+│ → Backend: Test    │
+│ → Backend: Build   │
+│ → Install (front)  │
+│ → Test + Coverage  │
+│ → Build (front)    │
+│ → SonarQube        │
+└────────┬───────────┘
          ▼
 ┌──────────────────┐
 │ Ver resultados   │
@@ -294,8 +342,11 @@ Es una advertencia de seguridad de Jenkins (no detiene el build). El `Jenkinsfil
 
 | Archivo | Descripción |
 |---------|-------------|
-| `Jenkinsfile` | Definición del pipeline CI (en la raíz, pipelinea backend y frontend) |
-| `backend/pom.xml` | Dependencias y build de Spring Boot |
+| `Jenkinsfile` | Pipeline mínimo actual (checkout + `ls -la`) |
+| `Jenkinsfile_v1` | Pipeline completo de respaldo (backend + frontend + Sonar) |
+| `backend/pom.xml` | Dependencias, JaCoCo y build de Spring Boot |
+| `backend/mvnw`, `backend/mvnw.cmd` | Maven Wrapper (no requiere Maven instalado) |
+| `backend/src/test/java/com/todo/` | Tests unitarios del backend (Service + Controller) |
 | `frontend/package.json` | Scripts `test:coverage`, `build` |
 | `frontend/sonar-project.properties.example` | Plantilla Sonar (referencia) |
 | `docs/manual-sonarqube.md` | Manual de SonarQube |

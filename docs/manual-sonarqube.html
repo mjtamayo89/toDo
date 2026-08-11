@@ -96,8 +96,8 @@
 <h1>Manual: Instalación y configuración de SonarQube</h1>
 
 <div class="meta">
-  <strong>Proyecto:</strong> React ToDo &nbsp;|&nbsp;
-  <strong>Project Key:</strong> <code>react-demo-todo</code> &nbsp;|&nbsp;
+  <strong>Proyecto:</strong> React ToDo (monorepo frontend + backend) &nbsp;|&nbsp;
+  <strong>Project Keys:</strong> <code>react-demo-todo</code> (frontend) · <code>todo-backend</code> (backend) &nbsp;|&nbsp;
   <strong>Fecha:</strong> Agosto 2026
 </div>
 
@@ -213,42 +213,88 @@ npm run sonar
 Dashboard localhost:9000
 </div>
 
-<h2>10. Jenkins (opcional)</h2>
-<p>El <code>Jenkinsfile</code> ejecuta tests, build y sonar-scanner.</p>
-<p>Credenciales en Jenkins:</p>
+<h2>10. Backend (Spring Boot): tests, cobertura y Sonar</h2>
+<p>El backend vive en <code>backend/</code> y usa <strong>Maven</strong> a través del <strong>Maven Wrapper</strong> (<code>mvnw</code> / <code>mvnw.cmd</code>) — no necesitas Maven instalado. Tiene su propio proyecto en Sonar.</p>
+
+<h3>10.1 Datos del proyecto backend</h3>
+<table>
+  <tr><th>Campo</th><th>Valor</th></tr>
+  <tr><td>Project key</td><td><code>todo-backend</code></td></tr>
+  <tr><td>Display name</td><td><code>ToDo Backend</code></td></tr>
+</table>
+<p>Ya configurados en <code>backend/pom.xml</code>. Sonar crea el proyecto solo, en el primer análisis.</p>
+
+<h3>10.2 Guardar el token como variable de entorno</h3>
+<pre>setx SONAR_TOKEN "TU_TOKEN_AQUI"</pre>
+<div class="note"><code>setx</code> solo aplica a procesos <strong>nuevos</strong>. Si el editor ya estaba abierto, reinícialo por completo (no basta con una terminal nueva). Verifica con <code>echo $env:SONAR_TOKEN</code>.</div>
+<p>Puedes reusar el token del frontend si es un token de <strong>usuario</strong> (no uno de proyecto atado solo a <code>react-demo-todo</code>). Si da <code>401</code>, genera uno nuevo.</p>
+
+<h3>10.3 Tests + cobertura (JaCoCo)</h3>
+<pre>cd backend
+.\mvnw.cmd clean test</pre>
+<p>Genera el reporte en:</p>
+<pre>backend/target/site/jacoco/index.html   ← visual
+backend/target/site/jacoco/jacoco.xml   ← lo lee Sonar</pre>
+
+<h3>10.4 Enviar el análisis a Sonar</h3>
+<pre>cd backend
+.\mvnw.cmd "org.sonarsource.scanner.maven:sonar-maven-plugin:sonar" "-Dsonar.host.url=http://localhost:9000" "-Dsonar.token=$env:SONAR_TOKEN"</pre>
+<div class="note">Las comillas dobles en cada <code>-D...</code> son necesarias en PowerShell; sin ellas, los dos puntos de la URL rompen el parseo de argumentos.</div>
+<p>Resultado en: <code>http://localhost:9000/dashboard?id=todo-backend</code></p>
+
+<h3>10.5 Nota técnica: Java 25 y Byte Buddy</h3>
+<p>Si ves <code>Java 25 (69) is not supported by the current version of Byte Buddy</code>, es porque Mockito (vía Byte Buddy) aún no soporta oficialmente versiones muy nuevas de Java. Ya está resuelto en <code>backend/pom.xml</code>:</p>
+<pre>&lt;argLine&gt;@{argLine} -Dnet.bytebuddy.experimental=true&lt;/argLine&gt;</pre>
+
+<h2>11. Jenkins (opcional)</h2>
+<p>El <code>Jenkinsfile</code> actual es una versión <strong>mínima</strong> (solo checkout + <code>ls -la</code>), no ejecuta tests/build/Sonar todavía. El pipeline completo quedó en <code>Jenkinsfile_v1</code>. Ver <code>docs/manual-jenkins.md</code>.</p>
+<p>Credenciales en Jenkins (solo si usas <code>Jenkinsfile_v1</code>):</p>
 <table>
   <tr><th>ID</th><th>Valor</th></tr>
   <tr><td><code>sonar-token</code></td><td>Token <code>squ_...</code></td></tr>
-  <tr><td><code>sonar-host-url</code></td><td><code>http://localhost:9000</code></td></tr>
+  <tr><td><code>sonar-host-url</code></td><td><code>http://host.docker.internal:9000</code></td></tr>
 </table>
 
-<h2>11. Solución de problemas</h2>
+<h2>12. Solución de problemas</h2>
 <table>
   <tr><th>Problema</th><th>Solución</th></tr>
   <tr><td>npm bloqueado en PowerShell</td><td>Usa <code>npm.cmd</code> o Git Bash</td></tr>
-  <tr><td>Error de autenticación</td><td>Verifica token y que SonarQube esté en <code>localhost:9000</code></td></tr>
+  <tr><td>Error de autenticación (frontend)</td><td>Verifica token y que SonarQube esté en <code>localhost:9000</code></td></tr>
   <tr><td>SonarQube no arranca</td><td><code>docker logs sonarqube</code></td></tr>
   <tr><td>SonarLint sin issues</td><td>Revisa conexión, project key, Reload Window</td></tr>
   <tr><td>Cobertura 0% en Sonar</td><td>Ejecuta <code>test:coverage</code> antes de <code>sonar</code></td></tr>
+  <tr><td><code>401 Unauthorized</code> en backend</td><td>Token de proyecto (no de usuario) o variable vacía — revisa <code>echo $env:SONAR_TOKEN</code></td></tr>
+  <tr><td>Error de resolución de plugin Maven</td><td>Envuelve cada <code>-D...</code> en comillas dobles en PowerShell</td></tr>
 </table>
 
-<h2>12. Archivos del proyecto</h2>
+<h2>13. Archivos del proyecto</h2>
 <table>
   <tr><th>Archivo</th><th>Descripción</th></tr>
-  <tr><td><code>sonar-project.properties.example</code></td><td>Plantilla</td></tr>
-  <tr><td><code>sonar-project.properties</code></td><td>Config local con token</td></tr>
-  <tr><td><code>package.json</code></td><td>Scripts test:coverage y sonar</td></tr>
-  <tr><td><code>coverage/lcov.info</code></td><td>Reporte para Sonar</td></tr>
-  <tr><td><code>coverage/index.html</code></td><td>Reporte visual</td></tr>
-  <tr><td><code>Jenkinsfile</code></td><td>Pipeline CI</td></tr>
+  <tr><td><code>frontend/sonar-project.properties.example</code></td><td>Plantilla</td></tr>
+  <tr><td><code>frontend/sonar-project.properties</code></td><td>Config local con token</td></tr>
+  <tr><td><code>frontend/package.json</code></td><td>Scripts test:coverage y sonar</td></tr>
+  <tr><td><code>frontend/coverage/lcov.info</code></td><td>Reporte para Sonar (frontend)</td></tr>
+  <tr><td><code>backend/pom.xml</code></td><td>Config Maven, JaCoCo y Sonar del backend</td></tr>
+  <tr><td><code>backend/mvnw</code>, <code>mvnw.cmd</code></td><td>Maven Wrapper</td></tr>
+  <tr><td><code>backend/src/test/java/com/todo/</code></td><td>Tests unitarios del backend</td></tr>
+  <tr><td><code>backend/target/site/jacoco/jacoco.xml</code></td><td>Reporte para Sonar (backend)</td></tr>
+  <tr><td><code>Jenkinsfile</code></td><td>Pipeline CI mínimo</td></tr>
+  <tr><td><code>Jenkinsfile_v1</code></td><td>Pipeline CI completo (respaldo)</td></tr>
 </table>
 
-<h2>13. Comandos rápidos</h2>
-<pre>npm run dev              # Desarrollo
+<h2>14. Comandos rápidos</h2>
+<pre># Frontend
+npm run dev              # Desarrollo
 npm test                 # Tests
 npm run test:coverage    # Cobertura
 npm run sonar            # Análisis Sonar
 
+# Backend
+cd backend
+.\mvnw.cmd clean test
+.\mvnw.cmd "org.sonarsource.scanner.maven:sonar-maven-plugin:sonar" "-Dsonar.host.url=http://localhost:9000" "-Dsonar.token=$env:SONAR_TOKEN"
+
+# SonarQube con Docker
 docker run -d --name sonarqube -p 9000:9000 sonarqube:latest
 docker start sonarqube
 docker stop sonarqube</pre>
