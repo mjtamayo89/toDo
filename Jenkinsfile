@@ -1,6 +1,10 @@
 pipeline {
   agent any
 
+  tools {
+    maven 'Maven-3'
+  }
+
   environment {
     SONAR_PROJECT_KEY = 'react-demo-todo'
     SONAR_PROJECT_NAME = 'React Demo-todo'

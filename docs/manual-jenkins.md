@@ -84,22 +84,29 @@ docker exec jenkins npm -v
 
 ---
 
-## 4b. Instalar Java 17 y Maven dentro del contenedor
+## 4b. Configurar Maven como herramienta de Jenkins
 
-El backend Spring Boot necesita **JDK 17** y **Maven**. La imagen `jenkins/jenkins:lts` ya trae un JDK (el que usa Jenkins), pero Maven no viene instalado. Instálalo una vez:
+El backend Spring Boot necesita **Maven**. En vez de instalarlo a mano en el contenedor, el `Jenkinsfile` lo pide como herramienta administrada por Jenkins:
 
-```bash
-docker exec -u root jenkins bash -c "apt-get update -qq && apt-get install -y -qq maven && mvn -v"
+```groovy
+tools {
+  maven 'Maven-3'
+}
 ```
 
-Verifica:
+Para que ese nombre exista, configúralo una vez en la UI:
 
-```bash
-docker exec jenkins mvn -v
-docker exec jenkins java -version
-```
+1. **Manage Jenkins** → **Tools** (Herramientas)
+2. Busca la sección **Maven installations**
+3. **Add Maven**
+   - **Name:** `Maven-3` (debe coincidir exactamente con el `Jenkinsfile`)
+   - Marca **Install automatically**
+   - **Version:** la más reciente de Maven 3.x
+4. **Save**
 
-> Si recreas el contenedor, repite este paso igual que con Node.js.
+Jenkins descargará Maven automáticamente la primera vez que el pipeline lo necesite; no hace falta tocar el contenedor.
+
+> El JDK que usa Jenkins internamente sirve para compilar el backend (Java 17). Si el build falla por versión de Java, añade también una **JDK installation** en la misma pantalla de Tools.
 
 ---
 
@@ -254,9 +261,9 @@ El repo es privado y Jenkins no tiene credenciales. Haz el repo público o añad
 
 Node.js no está instalado en el contenedor. Repite el paso 4.
 
-### `mvn: not found` en el build
+### `mvn: not found` o `Tool type "maven" does not have an install of "Maven-3"`
 
-Maven no está instalado en el contenedor. Repite el paso 4b.
+Falta configurar la herramienta Maven en Jenkins, o el nombre no coincide. Revisa el paso 4b: **Manage Jenkins → Tools → Maven installations**, y confirma que el nombre sea exactamente `Maven-3`.
 
 ### SonarQube: connection refused
 
@@ -308,8 +315,8 @@ docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 # Node en el contenedor (una vez)
 docker exec -u root jenkins bash -c "curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt-get install -y nodejs"
 
-# Maven en el contenedor (una vez)
-docker exec -u root jenkins bash -c "apt-get update -qq && apt-get install -y maven"
+# Maven: no se instala por comando, se configura en
+# Manage Jenkins → Tools → Maven installations → "Maven-3" (Install automatically)
 
 # Flujo local antes de push
 git add .
