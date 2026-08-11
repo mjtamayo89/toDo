@@ -1,27 +1,46 @@
 # ToDo
 
-Lista de tareas simple en React (en memoria).
+Monorepo con frontend React y backend Spring Boot.
 
-## Tecnologías utilizadas
+## Estructura
 
-- **React** — biblioteca de interfaz de usuario
-- **Vite** — herramienta de desarrollo y empaquetado
-- **Bootstrap** — estilos y componentes visuales
-- **JavaScript (ES modules)** — lógica de la aplicación
+```
+toDo/
+├── frontend/     React + Vite (UI)
+├── backend/      Spring Boot (API REST)
+└── docs/         Manuales
+```
 
 ## Cómo ejecutar
 
+### Backend (puerto 8081)
+
 ```bash
+cd backend
+mvn spring-boot:run
+```
+
+### Frontend (puerto 5173)
+
+```bash
+cd frontend
 npm install
 npm run dev
 ```
 
-Abre la URL que muestra Vite (normalmente http://localhost:5173).
+Abre http://localhost:5173. El frontend llama al API en `http://localhost:8081/api` (proxy Vite).
 
 ## Funciones
 
-- Agregar tareas
-- Marcar como completadas
-- Eliminar tareas
+- Agregar, completar y eliminar tareas
+- Datos persistidos en el backend (memoria hasta reiniciar Spring)
 
-Los datos se pierden al recargar la página (solo viven en memoria).
+## Tests y Sonar (frontend)
+
+```bash
+cd frontend
+npm run test:coverage
+npm run sonar
+```
+
+Ver `docs/manual-sonarqube.md` y `docs/manual-jenkins.md`.

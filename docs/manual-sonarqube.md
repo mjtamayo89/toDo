@@ -81,7 +81,7 @@ docker start sonarqube
 ### 5.1 Clonar / abrir el proyecto
 
 ```bash
-cd C:\Users\cotit\OneDrive\Desktop\toDo
+cd frontend
 ```
 
 ### 5.2 Instalar dependencias
@@ -104,7 +104,9 @@ Copia el archivo de ejemplo:
 copy sonar-project.properties.example sonar-project.properties
 ```
 
-Edita `sonar-project.properties` y reemplaza el token:
+*(Desde la carpeta `frontend/`)*
+
+Edita `frontend/sonar-project.properties` y reemplaza el token:
 
 ```properties
 sonar.projectKey=react-demo-todo
@@ -298,14 +300,14 @@ Algunas extensiones de VS Code (ej. Coverage Gutters) no funcionan bien en Curso
 
 | Archivo | Descripción |
 |---------|-------------|
-| `sonar-project.properties.example` | Plantilla de configuración |
-| `sonar-project.properties` | Config local con token (no se sube a Git) |
-| `package.json` | Scripts `test:coverage` y `sonar` |
-| `vite.config.js` | Configuración de cobertura Vitest |
-| `.vscode/settings.json` | SonarLint connected mode |
+| `frontend/sonar-project.properties.example` | Plantilla de configuración |
+| `frontend/sonar-project.properties` | Config local con token (no se sube a Git) |
+| `frontend/package.json` | Scripts `test:coverage` y `sonar` |
+| `frontend/vite.config.js` | Configuración de cobertura Vitest |
+| `frontend/.vscode/settings.json` | SonarLint connected mode |
 | `Jenkinsfile` | Pipeline CI con Sonar |
-| `coverage/lcov.info` | Reporte para Sonar |
-| `coverage/index.html` | Reporte visual de cobertura |
+| `frontend/coverage/lcov.info` | Reporte para Sonar |
+| `frontend/coverage/index.html` | Reporte visual de cobertura |
 
 ---
 

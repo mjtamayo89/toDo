@@ -84,6 +84,25 @@ docker exec jenkins npm -v
 
 ---
 
+## 4b. Instalar Java 17 y Maven dentro del contenedor
+
+El backend Spring Boot necesita **JDK 17** y **Maven**. La imagen `jenkins/jenkins:lts` ya trae un JDK (el que usa Jenkins), pero Maven no viene instalado. Instálalo una vez:
+
+```bash
+docker exec -u root jenkins bash -c "apt-get update -qq && apt-get install -y -qq maven && mvn -v"
+```
+
+Verifica:
+
+```bash
+docker exec jenkins mvn -v
+docker exec jenkins java -version
+```
+
+> Si recreas el contenedor, repite este paso igual que con Node.js.
+
+---
+
 ## 5. Crear credenciales de SonarQube
 
 **Manage Jenkins** → **Credentials** → **System** → **Global credentials** → **Add Credentials**
@@ -128,13 +147,17 @@ Si SonarQube también estuviera en Docker en la misma red, usarías el nombre de
 
 Jenkins lee el archivo `Jenkinsfile` del repositorio. Cada paso se define en un bloque `stage`:
 
-| Stage | Qué hace |
-|-------|----------|
-| **Checkout** | Descarga el código desde GitHub |
-| **Install** | `npm ci` — instala dependencias |
-| **Test + Coverage** | `npm run test:coverage` — tests y cobertura |
-| **Build** | `npm run build` — compila React |
-| **SonarQube** | `npx sonar-scanner` — envía análisis a Sonar |
+| Stage | Carpeta | Qué hace |
+|-------|---------|----------|
+| **Checkout** | raíz | Descarga el código desde GitHub |
+| **Backend: Test** | `backend/` | `mvn -B test` — tests de Spring Boot |
+| **Backend: Build** | `backend/` | `mvn -B package -DskipTests` — genera el `.jar` |
+| **Install** | `frontend/` | `npm ci` — instala dependencias |
+| **Test + Coverage** | `frontend/` | `npm run test:coverage` — tests y cobertura |
+| **Build** | `frontend/` | `npm run build` — compila React |
+| **SonarQube** | `frontend/` | `npx sonar-scanner` — envía análisis a Sonar |
+
+> El pipeline es **un solo `Jenkinsfile` en la raíz** del repo que usa `dir('backend')` y `dir('frontend')` para ejecutar cada bloque de comandos en la carpeta correcta. No existe un `Jenkinsfile` separado dentro de `backend/`.
 
 ### Estructura simplificada
 
@@ -143,10 +166,12 @@ pipeline {
   agent any
   stages {
     stage('Checkout') { ... }
-    stage('Install') { ... }
-    stage('Test + Coverage') { ... }
-    stage('Build') { ... }
-    stage('SonarQube') { ... }
+    stage('Backend: Test') { dir('backend') { ... } }
+    stage('Backend: Build') { dir('backend') { ... } }
+    stage('Install') { dir('frontend') { ... } }
+    stage('Test + Coverage') { dir('frontend') { ... } }
+    stage('Build') { dir('frontend') { ... } }
+    stage('SonarQube') { dir('frontend') { ... } }
   }
 }
 ```
@@ -229,6 +254,10 @@ El repo es privado y Jenkins no tiene credenciales. Haz el repo público o añad
 
 Node.js no está instalado en el contenedor. Repite el paso 4.
 
+### `mvn: not found` en el build
+
+Maven no está instalado en el contenedor. Repite el paso 4b.
+
 ### SonarQube: connection refused
 
 - Verifica que Sonar está corriendo en tu PC
@@ -258,9 +287,10 @@ Es una advertencia de seguridad de Jenkins (no detiene el build). El `Jenkinsfil
 
 | Archivo | Descripción |
 |---------|-------------|
-| `Jenkinsfile` | Definición del pipeline CI |
-| `package.json` | Scripts `test:coverage`, `build` |
-| `sonar-project.properties.example` | Plantilla Sonar (referencia) |
+| `Jenkinsfile` | Definición del pipeline CI (en la raíz, pipelinea backend y frontend) |
+| `backend/pom.xml` | Dependencias y build de Spring Boot |
+| `frontend/package.json` | Scripts `test:coverage`, `build` |
+| `frontend/sonar-project.properties.example` | Plantilla Sonar (referencia) |
 | `docs/manual-sonarqube.md` | Manual de SonarQube |
 | `docs/manual-jenkins.md` | Este manual |
 
@@ -277,6 +307,9 @@ docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 
 # Node en el contenedor (una vez)
 docker exec -u root jenkins bash -c "curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt-get install -y nodejs"
+
+# Maven en el contenedor (una vez)
+docker exec -u root jenkins bash -c "apt-get update -qq && apt-get install -y maven"
 
 # Flujo local antes de push
 git add .

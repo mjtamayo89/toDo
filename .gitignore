@@ -9,3 +9,6 @@ sonar-project.properties
 
 # Tests y cobertura
 coverage/
+
+# Spring Boot
+backend/target/
